@@ -1,13 +1,3 @@
-globalThis._cache ??= new Map();
-const key = `${tipo}|${marca}|${modelo}|${ano}|${uf}`.toLowerCase();
-
-if (globalThis._cache.has(key)) {
-  return res.status(200).json({ ok: true, data: globalThis._cache.get(key), cached: true });
-}
-
-// ... chama OpenAI, depois:
-globalThis._cache.set(key, data);
-
 import OpenAI from "openai";
 
 export default async function handler(req, res) {
@@ -76,4 +66,5 @@ UF: ${uf || "SP"}
     return res.status(500).json({ ok: false, error: err?.message || String(err) });
   }
 }
+
 
