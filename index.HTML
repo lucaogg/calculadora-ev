@@ -811,13 +811,10 @@ function getTipoSelecionado() {
 }
 
 async function carregarPreset() {
-  const btn = document.getElementById("btnPreset");
   try {
-    btn && (btn.disabled = true, btn.textContent = "Carregando...");
-
     setStatus("Buscando dados (FIPE/INMETRO/mercado)…");
 
-    const tipo = getTipoSelecionado();
+    const tipo = getTipoSelecionado(); // "comb" ou "ev"
     const marca = (document.getElementById("marca").value || "").trim();
     const modelo = (document.getElementById("modeloPreset").value || "").trim();
     const ano = parseInt(document.getElementById("anoModelo").value, 10);
@@ -828,38 +825,78 @@ async function carregarPreset() {
       return;
     }
 
-    const resp = await fetch(`/api/preset`, {
+    const resp = await fetch(`${API_BASE}/api/preset`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ tipo, marca, modelo, ano, uf })
     });
 
-    const json = await resp.json().catch(() => null);
-
-    if (!resp.ok || !json?.ok) {
-      const msg = json?.error || `Erro HTTP ${resp.status}`;
-      setStatus(`Falha ao carregar preset: ${msg}`, true);
+    const json = await resp.json();
+    if (!json.ok) {
+      setStatus("Não consegui carregar automaticamente. Tente novamente.", true);
       return;
     }
 
     const d = json.data;
 
-    // ... (o seu preenchimento dos campos continua igual)
+    // ===== Preencher CAMPOS JÁ EXISTENTES na sua calculadora =====
+    // Preço
+    if (tipo === "comb" && document.getElementById("precoComb")) {
+      document.getElementById("precoComb").value = Math.round(d.preco_fipe || 0);
+    }
+    if (tipo === "ev" && document.getElementById("precoEv")) {
+      document.getElementById("precoEv").value = Math.round(d.preco_fipe || 0);
+    }
 
+    // Consumo
+    if (tipo === "comb" && d.consumo_km_l && document.getElementById("consumoComb")) {
+      document.getElementById("consumoComb").value = d.consumo_km_l;
+    }
+    if (tipo === "ev" && d.consumo_km_kwh && document.getElementById("eficienciaEv")) {
+      document.getElementById("eficienciaEv").value = d.consumo_km_kwh;
+    }
+
+    // Seguro
+    if (tipo === "comb" && document.getElementById("seguroComb")) {
+      document.getElementById("seguroComb").value = Math.round(d.seguro_medio_anual || 0);
+    }
+    if (tipo === "ev" && document.getElementById("seguroEv")) {
+      document.getElementById("seguroEv").value = Math.round(d.seguro_medio_anual || 0);
+    }
+
+    // Depreciação
+    if (tipo === "comb") {
+      if (document.getElementById("dep1Comb")) document.getElementById("dep1Comb").value = d.depreciacao_primeiro_ano_pct ?? 10;
+      if (document.getElementById("depRestComb")) document.getElementById("depRestComb").value = d.depreciacao_demais_anos_pct ?? 7;
+    } else {
+      if (document.getElementById("dep1Ev")) document.getElementById("dep1Ev").value = d.depreciacao_primeiro_ano_pct ?? 8;
+      if (document.getElementById("depRestEv")) document.getElementById("depRestEv").value = d.depreciacao_demais_anos_pct ?? 3;
+    }
+
+    // IPVA (%)
+    if (tipo === "comb" && document.getElementById("ipvaComb")) {
+      document.getElementById("ipvaComb").value = d.ipva_pct ?? 4;
+    }
+    if (tipo === "ev" && document.getElementById("ipvaEv")) {
+      document.getElementById("ipvaEv").value = d.ipva_pct ?? 4;
+    }
+
+    // Mensagem de confiança
     const conf = (d.confianca || "media").toUpperCase();
     const obs = d.observacoes ? ` • ${d.observacoes}` : "";
     setStatus(`Preset carregado (${conf}).${obs}`);
 
+    // (Opcional) já roda o cálculo automaticamente:
+    // calcular();
+
   } catch (e) {
     console.error(e);
-    setStatus(`Erro ao carregar preset: ${e.message || e}`, true);
-  } finally {
-    btn && (btn.disabled = false, btn.textContent = "Carregar dados automaticamente");
+    setStatus("Erro ao carregar preset. Verifique o backend /api/preset.", true);
   }
 }
-
 
 </script>
 </body>
 </html>
+
 
