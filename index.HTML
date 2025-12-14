@@ -1,0 +1,899 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <title>Calculadora – Carro Elétrico x Combustão</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --card: #020617;
+      --accent: #22c55e;
+      --accent-soft: rgba(34, 197, 94, 0.15);
+      --text: #e5e7eb;
+      --muted: #9ca3af;
+      --danger: #ef4444;
+      --border: #1f2933;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: radial-gradient(circle at top, #1f2937 0, #020617 45%);
+      color: var(--text);
+    }
+    .page {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 24px 16px 48px;
+    }
+    h1 {
+      font-size: 1.9rem;
+      margin-bottom: 4px;
+    }
+    h1 span {
+      color: var(--accent);
+    }
+    .subtitle {
+      color: var(--muted);
+      font-size: 0.95rem;
+      margin-bottom: 24px;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: 1.1fr 1.1fr;
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+    .grid-3 {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 16px;
+    }
+    @media (max-width: 850px) {
+      .grid {
+        grid-template-columns: 1fr;
+      }
+    }
+    .card {
+      background: linear-gradient(145deg, rgba(15,23,42,0.98), rgba(15,23,42,0.9));
+      border-radius: 18px;
+      border: 1px solid rgba(148, 163, 184, 0.12);
+      padding: 16px 18px 18px;
+      box-shadow: 0 18px 45px rgba(15, 23, 42, 0.8);
+      backdrop-filter: blur(12px);
+    }
+    .card h2 {
+      font-size: 1.1rem;
+      margin: 0 0 10px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .pill {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      padding: 2px 8px;
+      border-radius: 999px;
+      border: 1px solid var(--accent-soft);
+      color: var(--accent);
+      background: rgba(34, 197, 94, 0.1);
+    }
+    .field-group {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+      margin-top: 8px;
+    }
+    .field-group.single {
+      grid-template-columns: minmax(0, 1fr);
+    }
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+      font-size: 0.8rem;
+    }
+    .field label {
+      color: var(--muted);
+    }
+    .field input {
+      padding: 7px 9px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: #020617;
+      color: var(--text);
+      font-size: 0.85rem;
+    }
+    .field input:focus {
+      outline: 1px solid var(--accent);
+      box-shadow: 0 0 0 1px rgba(34, 197, 94, 0.2);
+    }
+    .field small {
+      color: var(--muted);
+      font-size: 0.7rem;
+      opacity: 0.9;
+    }
+    .radio-row {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      font-size: 0.85rem;
+      color: var(--muted);
+      margin-top: 8px;
+    }
+    .radio-row label {
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .radio-row input[type="radio"] {
+      accent-color: #22c55e;
+      width: 14px;
+      height: 14px;
+    }
+    .btn-row {
+      display: flex;
+      justify-content: flex-end;
+      margin-bottom: 16px;
+      gap: 12px;
+    }
+    button {
+      cursor: pointer;
+      border-radius: 999px;
+      border: none;
+      padding: 9px 18px;
+      font-size: 0.9rem;
+      font-weight: 500;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .btn-primary {
+      background: linear-gradient(135deg, #22c55e, #16a34a);
+      color: #0b1120;
+    }
+    .btn-ghost {
+      background: transparent;
+      color: var(--muted);
+      border: 1px solid rgba(148, 163, 184, 0.35);
+    }
+    button:active {
+      transform: translateY(1px);
+    }
+    .results {
+      margin-top: 10px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 8px;
+      font-size: 0.78rem;
+    }
+    thead {
+      background: rgba(15, 23, 42, 0.9);
+      position: sticky;
+      top: 0;
+      z-index: 1;
+    }
+    th, td {
+      padding: 6px 8px;
+      border-bottom: 1px solid rgba(31, 41, 55, 0.9);
+      text-align: right;
+      white-space: nowrap;
+    }
+    th:first-child, td:first-child { text-align: left; }
+    tbody tr:nth-child(even) {
+      background: rgba(15, 23, 42, 0.7);
+    }
+    .highlight-row {
+      background: rgba(34, 197, 94, 0.08) !important;
+      font-weight: 600;
+    }
+    .tag-good {
+      color: var(--accent);
+      font-weight: 600;
+    }
+    .tag-bad {
+      color: var(--danger);
+      font-weight: 600;
+    }
+    .summary {
+      margin-top: 6px;
+      font-size: 0.85rem;
+      color: var(--muted);
+    }
+    .summary strong {
+      color: var(--text);
+    }
+    canvas {
+      background: radial-gradient(circle at top, #020617 0, #020617 60%);
+      border-radius: 16px;
+      padding: 8px;
+      border: 1px solid rgba(148, 163, 184, 0.16);
+    }
+  </style>
+</head>
+<body>
+<div class="page">
+  <h1>
+    Calculadora <span>Carro Elétrico x Combustão</span>
+  </h1>
+  <div class="subtitle">
+    Compare custos <strong>fixos</strong> (IPVA, seguro, manutenção, depreciação) e <strong>variáveis</strong> (combustível / energia)
+    para descobrir em quantos anos o elétrico se paga.
+  </div>
+
+  <!-- MODO DE CÁLCULO -->
+  <div class="card">
+    <h2>Uso do veículo <span class="pill">Entrada</span></h2>
+    <div class="radio-row">
+      <label>
+        <input type="radio" name="modoKm" value="ano" checked onclick="toggleModoKm()" />
+        Informar <strong>quilometragem anual</strong> (km/ano)
+      </label>
+      <label>
+        <input type="radio" name="modoKm" value="mes" onclick="toggleModoKm()" />
+        Informar <strong>quilometragem mensal</strong> (km/mês)
+      </label>
+    </div>
+
+    <div class="field-group single" style="margin-top:12px;">
+      <div id="campoKmAno" class="field">
+        <label for="kmAno">Quilometragem por ano (km)</label>
+        <input id="kmAno" type="number" value="12000" min="1000" step="500" />
+        <small>Ex.: 12.000 km/ano.</small>
+      </div>
+      <div id="campoKmMes" class="field" style="display:none;">
+        <label for="kmMes">Quilometragem por mês (km)</label>
+        <input id="kmMes" type="number" value="1000" min="100" step="100" />
+        <small>Ex.: 1.000 km/mês ≈ 12.000 km/ano.</small>
+      </div>
+      <div class="field">
+        <label for="horizonte">Horizonte de análise (anos)</label>
+        <input id="horizonte" type="number" value="9" min="1" max="20" />
+      </div>
+    </div>
+  </div>
+
+<!-- PRESETS (FIPE/INMETRO via IA) -->
+<div class="card" style="margin-top:16px;">
+  <h2>Presets automáticos <span class="pill">FIPE/INMETRO</span></h2>
+
+  <div class="field-group">
+    <div class="field">
+      <label>Tipo do veículo</label>
+      <div class="radio-row" style="margin-top:6px;">
+        <label><input type="radio" name="tipoVeiculo" value="comb" checked /> Combustão</label>
+        <label><input type="radio" name="tipoVeiculo" value="ev" /> Elétrico</label>
+      </div>
+    </div>
+
+    <div class="field">
+      <label for="uf">UF (para IPVA)</label>
+      <input id="uf" type="text" value="SP" maxlength="2" />
+      <small>Ex.: SP, RJ, MG…</small>
+    </div>
+
+    <div class="field">
+      <label for="marca">Marca</label>
+      <input id="marca" type="text" placeholder="Ex.: BYD" />
+    </div>
+
+    <div class="field">
+      <label for="modeloPreset">Modelo</label>
+      <input id="modeloPreset" type="text" placeholder="Ex.: Dolphin Mini" />
+    </div>
+
+    <div class="field">
+      <label for="anoModelo">Ano</label>
+      <input id="anoModelo" type="number" value="2024" min="1990" max="2035" />
+    </div>
+
+    <div class="field">
+      <label>&nbsp;</label>
+      <button class="btn-primary" type="button" onclick="carregarPreset()">
+        Carregar dados automaticamente
+      </button>
+      <small id="presetStatus" style="display:block; margin-top:6px; color: var(--muted);">
+        Preencha marca/modelo/ano e clique para puxar dados.
+      </small>
+    </div>
+  </div>
+</div>
+
+
+
+  <!-- CONFIG CARROS -->
+  <div class="grid" style="margin-top:16px;">
+    <!-- COMBUSTÃO -->
+    <div class="card">
+      <h2>Carro a combustão ⛽</h2>
+      <div class="field-group">
+        <div class="field">
+          <label for="precoComb">Preço de compra (R$)</label>
+          <input id="precoComb" type="number" value="60000" step="1000" />
+        </div>
+        <div class="field">
+          <label for="dep1Comb">Depreciação 1º ano (%)</label>
+          <input id="dep1Comb" type="number" value="10" step="0.5" />
+        </div>
+        <div class="field">
+          <label for="depRestComb">Depreciação anos seguintes (%)</label>
+          <input id="depRestComb" type="number" value="7" step="0.5" />
+        </div>
+        <div class="field">
+          <label for="ipvaComb">IPVA (% do valor)</label>
+          <input id="ipvaComb" type="number" value="4" step="0.5" />
+        </div>
+        <div class="field">
+          <label for="seguroComb">Seguro no 1º ano (R$)</label>
+          <input id="seguroComb" type="number" value="2800" step="100" />
+          <small>Desconto anual aplicado abaixo.</small>
+        </div>
+        <div class="field">
+          <label for="descSeguroComb">Desconto anual do seguro (%)</label>
+          <input id="descSeguroComb" type="number" value="3" step="0.5" />
+        </div>
+        <div class="field">
+          <label for="manutComb">Manutenção média anual (R$)</label>
+          <input id="manutComb" type="number" value="2000" step="100" />
+        </div>
+        <div class="field">
+          <label for="consumoComb">Consumo (km/L)</label>
+          <input id="consumoComb" type="number" value="10" step="0.1" />
+        </div>
+        <div class="field">
+          <label for="precoCombustivel">Preço combustível (R$/litro)</label>
+          <input id="precoCombustivel" type="number" value="6.0" step="0.1" />
+        </div>
+      </div>
+    </div>
+
+    <!-- ELÉTRICO -->
+    <div class="card">
+      <h2>Carro elétrico ⚡</h2>
+      <div class="field-group">
+        <div class="field">
+          <label for="precoEv">Preço de compra (R$)</label>
+          <input id="precoEv" type="number" value="135100" step="1000" />
+        </div>
+        <div class="field">
+          <label for="dep1Ev">Depreciação 1º ano (%)</label>
+          <input id="dep1Ev" type="number" value="8" step="0.5" />
+        </div>
+        <div class="field">
+          <label for="depRestEv">Depreciação anos seguintes (%)</label>
+          <input id="depRestEv" type="number" value="3" step="0.5" />
+        </div>
+        <div class="field">
+          <label for="ipvaEv">IPVA (% do valor)</label>
+          <input id="ipvaEv" type="number" value="4" step="0.5" />
+        </div>
+        <div class="field">
+          <label for="seguroEv">Seguro no 1º ano (R$)</label>
+          <input id="seguroEv" type="number" value="3500" step="100" />
+        </div>
+        <div class="field">
+          <label for="descSeguroEv">Desconto anual do seguro (%)</label>
+          <input id="descSeguroEv" type="number" value="5" step="0.5" />
+        </div>
+        <div class="field">
+          <label for="manutEv">Manutenção média anual (R$)</label>
+          <input id="manutEv" type="number" value="800" step="100" />
+          <small>Pode usar média das revisões do EV.</small>
+        </div>
+        <div class="field">
+          <label for="eficienciaEv">Eficiência (km/kWh)</label>
+          <input id="eficienciaEv" type="number" value="6" step="0.1" />
+        </div>
+        <div class="field">
+          <label for="precoKwh">Preço energia (R$/kWh)</label>
+          <input id="precoKwh" type="number" value="0.0" step="0.1" />
+          <small>Use 0 se recarrega só em solar / cortesia.</small>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- BOTÕES -->
+  <div class="btn-row">
+    <button class="btn-ghost" type="button" onclick="resetForm()">Resetar</button>
+    <button class="btn-primary" type="button" onclick="calcular()">
+      Calcular
+    </button>
+  </div>
+
+  <!-- RESULTADOS -->
+  <div class="card results">
+    <h2>Resultados e payback 📊</h2>
+    <div id="resumo" class="summary">
+      Escolha o modo de quilometragem, ajuste os parâmetros e clique em <strong>Calcular</strong>.
+    </div>
+    <div style="max-height: 270px; overflow:auto; margin-top:10px;">
+      <table id="tabelaResultados">
+        <thead>
+          <tr>
+            <th>Ano</th>
+            <th>Custo Combustão (R$)</th>
+            <th>Custo Elétrico (R$)</th>
+            <th>Diferença no ano (R$)</th>
+            <th>Diferença acumulada (R$)</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- GRÁFICOS -->
+  <div class="grid-3" style="margin-top:18px;">
+    <div class="card">
+      <h2>Valor de mercado estimado</h2>
+      <canvas id="chartValor"></canvas>
+    </div>
+    <div class="card">
+      <h2>Custo anual por veículo</h2>
+      <canvas id="chartCusto"></canvas>
+    </div>
+    <div class="card">
+      <h2>Custo acumulado (TCO) & payback</h2>
+      <canvas id="chartPayback"></canvas>
+    </div>
+  </div>
+</div>
+
+<script>
+  let chartValor, chartCusto, chartPayback;
+
+  function num(id, def=0) {
+    const el = document.getElementById(id);
+    if (!el) return def;
+    const v = parseFloat(el.value);
+    return isNaN(v) ? def : v;
+  }
+
+  function toggleModoKm() {
+    const modo = document.querySelector('input[name="modoKm"]:checked').value;
+    if (modo === "ano") {
+      document.getElementById("campoKmAno").style.display = "block";
+      document.getElementById("campoKmMes").style.display = "none";
+    } else {
+      document.getElementById("campoKmAno").style.display = "none";
+      document.getElementById("campoKmMes").style.display = "block";
+    }
+  }
+
+  function simularCarro({
+    preco,
+    dep1,
+    depRest,
+    ipvaPct,
+    seguroBase,
+    descSeguroPct,
+    manutBase,
+    tipo,
+    kmAno,
+    consumoKmL,
+    precoCombustivel,
+    eficienciaKmKwh,
+    precoKwh,
+    anos
+  }) {
+    const anosArr = [];
+    const valorArr = [];
+    const custoAnualArr = [];
+    const depArr = [];
+    const ipvaArr = [];
+    const seguroArr = [];
+    const manutArr = [];
+    const energiaArr = [];
+    const custoAcumArr = [];
+
+    let valorAtual = preco;
+    let seguroAtual = seguroBase;
+    let custoAcum = 0;
+
+    const anoBase = new Date().getFullYear();
+
+    for (let i = 1; i <= anos; i++) {
+      const ano = anoBase + (i - 1);
+      anosArr.push(ano);
+
+      let valorAnterior = valorAtual;
+      if (i === 1) {
+        valorAtual = preco;
+      } else if (i === 2) {
+        valorAtual = preco * (1 - dep1 / 100);
+      } else {
+        valorAtual = valorAtual * (1 - depRest / 100);
+      }
+      valorArr.push(valorAtual);
+
+      let dep = i === 1 ? 0 : (valorAnterior - valorAtual);
+      if (dep < 0) dep = 0;
+      depArr.push(dep);
+
+      const ipva = valorAtual * (ipvaPct / 100);
+      ipvaArr.push(ipva);
+
+      if (i === 1) {
+        seguroAtual = seguroBase;
+      } else {
+        seguroAtual = seguroAtual * (1 - descSeguroPct / 100);
+      }
+      seguroArr.push(seguroAtual);
+
+      const manut = manutBase;
+      manutArr.push(manut);
+
+      let energia = 0;
+      if (tipo === "comb") {
+        if (consumoKmL > 0) {
+          const litros = kmAno / consumoKmL;
+          energia = litros * precoCombustivel;
+        }
+      } else {
+        if (eficienciaKmKwh > 0) {
+          const kwh = kmAno / eficienciaKmKwh;
+          energia = kwh * precoKwh;
+        }
+      }
+      energiaArr.push(energia);
+
+      const custoAno = dep + ipva + seguroAtual + manut + energia;
+      custoAnualArr.push(custoAno);
+
+      custoAcum += custoAno;
+      custoAcumArr.push(custoAcum);
+    }
+
+    return {
+      anosArr,
+      valorArr,
+      custoAnualArr,
+      depArr,
+      ipvaArr,
+      seguroArr,
+      manutArr,
+      energiaArr,
+      custoAcumArr
+    };
+  }
+
+  function formatMoney(v) {
+    return v.toLocaleString("pt-BR", {
+      style: "currency",
+      currency: "BRL",
+      maximumFractionDigits: 0
+    });
+  }
+
+  function calcular() {
+    const anos = Math.max(1, Math.min(20, parseInt(num("horizonte", 9))));
+    const modoKm = document.querySelector('input[name="modoKm"]:checked').value;
+
+    let kmAno;
+    if (modoKm === "ano") {
+      kmAno = num("kmAno", 12000);
+    } else {
+      const kmMes = num("kmMes", 1000);
+      kmAno = kmMes * 12;
+    }
+
+    const combustao = simularCarro({
+      preco: num("precoComb", 60000),
+      dep1: num("dep1Comb", 10),
+      depRest: num("depRestComb", 7),
+      ipvaPct: num("ipvaComb", 4),
+      seguroBase: num("seguroComb", 2800),
+      descSeguroPct: num("descSeguroComb", 3),
+      manutBase: num("manutComb", 2000),
+      tipo: "comb",
+      kmAno,
+      consumoKmL: num("consumoComb", 10),
+      precoCombustivel: num("precoCombustivel", 6),
+      eficienciaKmKwh: 0,
+      precoKwh: 0,
+      anos
+    });
+
+    const eletrico = simularCarro({
+      preco: num("precoEv", 135100),
+      dep1: num("dep1Ev", 8),
+      depRest: num("depRestEv", 3),
+      ipvaPct: num("ipvaEv", 4),
+      seguroBase: num("seguroEv", 3500),
+      descSeguroPct: num("descSeguroEv", 5),
+      manutBase: num("manutEv", 800),
+      tipo: "ev",
+      kmAno,
+      consumoKmL: 0,
+      precoCombustivel: 0,
+      eficienciaKmKwh: num("eficienciaEv", 6),
+      precoKwh: num("precoKwh", 0),
+      anos
+    });
+
+    const tbody = document.querySelector("#tabelaResultados tbody");
+    tbody.innerHTML = "";
+
+    let paybackIndex = -1;
+    let diffAcum = 0;
+
+    for (let i = 0; i < anos; i++) {
+      const ano = combustao.anosArr[i];
+      const custoComb = combustao.custoAnualArr[i];
+      const custoEv = eletrico.custoAnualArr[i];
+      const diff = custoComb - custoEv;
+      diffAcum += diff;
+
+      if (paybackIndex === -1 && diffAcum >= 0) {
+        paybackIndex = i;
+      }
+
+      const tr = document.createElement("tr");
+      if (i === paybackIndex) tr.classList.add("highlight-row");
+
+      const tdAno = document.createElement("td");
+      tdAno.textContent = ano;
+
+      const tdComb = document.createElement("td");
+      tdComb.textContent = formatMoney(custoComb);
+
+      const tdEv = document.createElement("td");
+      tdEv.textContent = formatMoney(custoEv);
+
+      const tdDiff = document.createElement("td");
+      tdDiff.textContent = (diff >= 0 ? "+" : "") + formatMoney(diff);
+      tdDiff.className = diff >= 0 ? "tag-good" : "tag-bad";
+
+      const tdDiffAcum = document.createElement("td");
+      tdDiffAcum.textContent =
+        (diffAcum >= 0 ? "+" : "") +
+        diffAcum.toLocaleString("pt-BR", {
+          style: "currency",
+          currency: "BRL",
+          maximumFractionDigits: 0
+        });
+      tdDiffAcum.className = diffAcum >= 0 ? "tag-good" : "tag-bad";
+
+      tr.appendChild(tdAno);
+      tr.appendChild(tdComb);
+      tr.appendChild(tdEv);
+      tr.appendChild(tdDiff);
+      tr.appendChild(tdDiffAcum);
+      tbody.appendChild(tr);
+    }
+
+    const resumo = document.getElementById("resumo");
+    const totalComb = combustao.custoAcumArr[anos - 1];
+    const totalEv = eletrico.custoAcumArr[anos - 1];
+    const deltaTotal = totalComb - totalEv;
+
+    let texto = `Em ${anos} ano(s), o custo acumulado estimado é de ${formatMoney(totalComb)} para o carro a combustão e ${formatMoney(totalEv)} para o elétrico. `;
+    if (deltaTotal > 0) {
+      texto += `O elétrico sai aproximadamente ${formatMoney(deltaTotal)} <strong>mais barato</strong> no horizonte escolhido. `;
+    } else if (deltaTotal < 0) {
+      texto += `O elétrico sai aproximadamente ${formatMoney(-deltaTotal)} <strong>mais caro</strong> no horizonte escolhido. `;
+    } else {
+      texto += `Os dois saem praticamente empatados em custo no horizonte escolhido. `;
+    }
+
+    if (paybackIndex >= 0) {
+      const anoPayback = combustao.anosArr[paybackIndex];
+      texto += `O ponto de payback (quando o elétrico passa a ser mais barato no acumulado) ocorre por volta de <strong>${anoPayback}</strong>.`;
+    } else {
+      texto += `Com esses parâmetros, não há payback dentro do horizonte escolhido.`;
+    }
+
+    if (modoKm === "mes") {
+      texto += " (Entradas em <strong>km/mês</strong>, convertidas automaticamente para km/ano para os cálculos.)";
+    }
+
+    resumo.innerHTML = texto;
+
+    desenharGraficos(combustao, eletrico);
+  }
+
+  function desenharGraficos(comb, ev) {
+    const labels = comb.anosArr;
+
+    if (chartValor) chartValor.destroy();
+    if (chartCusto) chartCusto.destroy();
+    if (chartPayback) chartPayback.destroy();
+
+    const baseOptions = {
+      responsive: true,
+      plugins: {
+        legend: { labels: { color: "#e5e7eb" } }
+      },
+      scales: {
+        x: { ticks: { color: "#9ca3af" }, grid: { display: false } },
+        y: { ticks: { color: "#9ca3af" }, grid: { color: "rgba(55,65,81,0.6)" } }
+      }
+    };
+
+    const ctxValor = document.getElementById("chartValor").getContext("2d");
+    chartValor = new Chart(ctxValor, {
+      type: "line",
+      data: {
+        labels,
+        datasets: [
+          { label: "Combustão – valor estimado", data: comb.valorArr },
+          { label: "Elétrico – valor estimado", data: ev.valorArr }
+        ]
+      },
+      options: baseOptions
+    });
+
+    const ctxCusto = document.getElementById("chartCusto").getContext("2d");
+    chartCusto = new Chart(ctxCusto, {
+      type: "line",
+      data: {
+        labels,
+        datasets: [
+          { label: "Custo anual – Combustão", data: comb.custoAnualArr },
+          { label: "Custo anual – Elétrico", data: ev.custoAnualArr }
+        ]
+      },
+      options: baseOptions
+    });
+
+    const ctxPayback = document.getElementById("chartPayback").getContext("2d");
+    chartPayback = new Chart(ctxPayback, {
+      type: "line",
+      data: {
+        labels,
+        datasets: [
+          { label: "Custo acumulado – Combustão", data: comb.custoAcumArr },
+          { label: "Custo acumulado – Elétrico", data: ev.custoAcumArr }
+        ]
+      },
+      options: baseOptions
+    });
+  }
+
+  function resetForm() {
+    document.querySelector('input[name="modoKm"][value="ano"]').checked = true;
+    toggleModoKm();
+
+    document.getElementById("kmAno").value = 12000;
+    document.getElementById("kmMes").value = 1000;
+    document.getElementById("horizonte").value = 9;
+
+    document.getElementById("precoComb").value = 60000;
+    document.getElementById("dep1Comb").value = 10;
+    document.getElementById("depRestComb").value = 7;
+    document.getElementById("ipvaComb").value = 4;
+    document.getElementById("seguroComb").value = 2800;
+    document.getElementById("descSeguroComb").value = 3;
+    document.getElementById("manutComb").value = 2000;
+    document.getElementById("consumoComb").value = 10;
+    document.getElementById("precoCombustivel").value = 6.0;
+
+    document.getElementById("precoEv").value = 135100;
+    document.getElementById("dep1Ev").value = 8;
+    document.getElementById("depRestEv").value = 3;
+    document.getElementById("ipvaEv").value = 4;
+    document.getElementById("seguroEv").value = 3500;
+    document.getElementById("descSeguroEv").value = 5;
+    document.getElementById("manutEv").value = 800;
+    document.getElementById("eficienciaEv").value = 6;
+    document.getElementById("precoKwh").value = 0.0;
+
+    document.querySelector("#tabelaResultados tbody").innerHTML = "";
+    document.getElementById("resumo").innerHTML =
+      'Escolha o modo de quilometragem, ajuste os parâmetros e clique em <strong>Calcular</strong>.';
+
+    if (chartValor) chartValor.destroy();
+    if (chartCusto) chartCusto.destroy();
+    if (chartPayback) chartPayback.destroy();
+  }
+
+  // inicia no modo correto
+  toggleModoKm();
+</script>
+</body>
+</html>
+
+const API_BASE = ""; // ex.: "https://seusite.com" ou "" se for mesma origem
+
+function setStatus(msg, isError=false) {
+  const el = document.getElementById("presetStatus");
+  if (!el) return;
+  el.textContent = msg;
+  el.style.color = isError ? "var(--danger)" : "var(--muted)";
+}
+
+function getTipoSelecionado() {
+  return document.querySelector('input[name="tipoVeiculo"]:checked')?.value || "comb";
+}
+
+async function carregarPreset() {
+  try {
+    setStatus("Buscando dados (FIPE/INMETRO/mercado)…");
+
+    const tipo = getTipoSelecionado(); // "comb" ou "ev"
+    const marca = (document.getElementById("marca").value || "").trim();
+    const modelo = (document.getElementById("modeloPreset").value || "").trim();
+    const ano = parseInt(document.getElementById("anoModelo").value, 10);
+    const uf = (document.getElementById("uf").value || "SP").trim().toUpperCase();
+
+    if (!marca || !modelo || !ano) {
+      setStatus("Preencha Marca, Modelo e Ano para carregar o preset.", true);
+      return;
+    }
+
+    const resp = await fetch(`${API_BASE}/api/preset`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ tipo, marca, modelo, ano, uf })
+    });
+
+    const json = await resp.json();
+    if (!json.ok) {
+      setStatus("Não consegui carregar automaticamente. Tente novamente.", true);
+      return;
+    }
+
+    const d = json.data;
+
+    // ===== Preencher CAMPOS JÁ EXISTENTES na sua calculadora =====
+    // Preço
+    if (tipo === "comb" && document.getElementById("precoComb")) {
+      document.getElementById("precoComb").value = Math.round(d.preco_fipe || 0);
+    }
+    if (tipo === "ev" && document.getElementById("precoEv")) {
+      document.getElementById("precoEv").value = Math.round(d.preco_fipe || 0);
+    }
+
+    // Consumo
+    if (tipo === "comb" && d.consumo_km_l && document.getElementById("consumoComb")) {
+      document.getElementById("consumoComb").value = d.consumo_km_l;
+    }
+    if (tipo === "ev" && d.consumo_km_kwh && document.getElementById("eficienciaEv")) {
+      document.getElementById("eficienciaEv").value = d.consumo_km_kwh;
+    }
+
+    // Seguro
+    if (tipo === "comb" && document.getElementById("seguroComb")) {
+      document.getElementById("seguroComb").value = Math.round(d.seguro_medio_anual || 0);
+    }
+    if (tipo === "ev" && document.getElementById("seguroEv")) {
+      document.getElementById("seguroEv").value = Math.round(d.seguro_medio_anual || 0);
+    }
+
+    // Depreciação
+    if (tipo === "comb") {
+      if (document.getElementById("dep1Comb")) document.getElementById("dep1Comb").value = d.depreciacao_primeiro_ano_pct ?? 10;
+      if (document.getElementById("depRestComb")) document.getElementById("depRestComb").value = d.depreciacao_demais_anos_pct ?? 7;
+    } else {
+      if (document.getElementById("dep1Ev")) document.getElementById("dep1Ev").value = d.depreciacao_primeiro_ano_pct ?? 8;
+      if (document.getElementById("depRestEv")) document.getElementById("depRestEv").value = d.depreciacao_demais_anos_pct ?? 3;
+    }
+
+    // IPVA (%)
+    if (tipo === "comb" && document.getElementById("ipvaComb")) {
+      document.getElementById("ipvaComb").value = d.ipva_pct ?? 4;
+    }
+    if (tipo === "ev" && document.getElementById("ipvaEv")) {
+      document.getElementById("ipvaEv").value = d.ipva_pct ?? 4;
+    }
+
+    // Mensagem de confiança
+    const conf = (d.confianca || "media").toUpperCase();
+    const obs = d.observacoes ? ` • ${d.observacoes}` : "";
+    setStatus(`Preset carregado (${conf}).${obs}`);
+
+    // (Opcional) já roda o cálculo automaticamente:
+    // calcular();
+
+  } catch (e) {
+    console.error(e);
+    setStatus("Erro ao carregar preset. Verifique o backend /api/preset.", true);
+  }
+}
