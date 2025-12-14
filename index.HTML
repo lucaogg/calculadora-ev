@@ -895,8 +895,59 @@ async function carregarPreset() {
   }
 }
 
+<!-- PRESET DE DEPRECIAÇÃO (FIPE calibrado) -->
+<div class="card" style="margin-top:16px;">
+  <h2>Depreciação calibrada <span class="pill">Metodologia FIPE</span></h2>
+
+  <div class="field-group">
+    <div class="field" style="grid-column: 1 / -1;">
+      <label for="presetDep">Escolher preset de referência</label>
+      <select id="presetDep" style="padding:7px 9px; border-radius:10px; border:1px solid var(--border); background:#020617; color:var(--text);">
+        <option value="">— Selecione —</option>
+        <option value="dolphin_ev_2024">BYD Dolphin EV 2024 (FIPE 095007-6)</option>
+        <option value="dolphin_mini_2024">BYD Dolphin Mini 2024 (FIPE 095010-6)</option>
+        <option value="kwid_2024">Renault Kwid Intense 2024 (FIPE 025267-0)</option>
+      </select>
+      <small id="depExplain" style="display:block; margin-top:6px; color: var(--muted);"></small>
+    </div>
+  </div>
+
+  <details style="margin-top:10px;">
+    <summary style="cursor:pointer; color: var(--text);"><strong>Como calculamos a depreciação</strong></summary>
+    <div style="margin-top:10px; color: var(--muted); line-height:1.55;">
+      <p>
+        A depreciação é baseada na variação do <strong>Preço Médio</strong> da <strong>Tabela FIPE</strong>
+        para o mesmo <strong>código FIPE</strong>, entre meses de referência.
+      </p>
+      <p>
+        Fórmula: <code>((FIPE_final / FIPE_inicial) - 1) × 100</code>
+      </p>
+      <p><strong>Presets calibrados (FIPE real):</strong></p>
+      <ul>
+        <li>
+          <strong>BYD Dolphin EV 2024 (095007-6):</strong>
+          1º ano <strong>10,32%</strong> (dez/2023→dez/2024) • anos seguintes <strong>8,87%</strong> (dez/2024→dez/2025)
+        </li>
+        <li>
+          <strong>BYD Dolphin Mini 2024 (095010-6):</strong>
+          1º ano <strong>9,28%</strong> (abr/2024→dez/2024) • anos seguintes <strong>0% a 2%</strong> (pós-ajuste estabilizado; usamos <strong>1,00%</strong> conservador)
+        </li>
+        <li>
+          <strong>Renault Kwid Intense 2024 (025267-0):</strong>
+          1º ano <strong>7,80%</strong> (dez/2023→dez/2024) • anos seguintes <strong>4,85%</strong> (dez/2024→dez/2025)
+        </li>
+      </ul>
+      <p>
+        Você pode editar manualmente os percentuais nos campos de “Depreciação” para simular outros cenários.
+      </p>
+    </div>
+  </details>
+</div>
+
+
 </script>
 </body>
 </html>
+
 
 
